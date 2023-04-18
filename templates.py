@@ -84,7 +84,8 @@ $description2
 
 
 def generateLevel(settings: dict, level_name: str ):
-    entry = f"""var {level_name} = {'{'}
+    # entry = f"""var {level_name} = {'{'}
+    entry = f"""
 	"builtin": true,
 	"level_id": L_EXPERIMENTAL,
 	"level_text": "Experimental",
@@ -92,7 +93,7 @@ def generateLevel(settings: dict, level_name: str ):
 """
     for setting in settings:
         entry += f'\t"{setting}": {settings[setting]["block"]},\n'
-    entry += "};"
+    # entry += "};"
     return entry
 
 if __name__ == "__main__":

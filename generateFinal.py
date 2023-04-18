@@ -1,39 +1,27 @@
-import shutil
-
-# copy all files from Scripts to .
-shutil.copytree("Scripts", ".", dirs_exist_ok=True)
-
 from getWebAPIs import *
 from graphs import *
 from helpFunctions import *
 from mergeData import *
 from pythongen import *
 from templates import *
-import argparse, logging
-
-
-
-def generateAll(saveTo, logger):
-    # mergeData.py -ga WEB_apis
-    main_generateAPIs("Data", logger=logger)
-    # mergeData.py -g Crawls/aggregated_both_modes_only.sqlite
-    # pythongen.py --all_apis web-api-manager/sources/standard
-    # pythongen.py --implemented_apis webextension/common/
-    # getWebAPIs.py -aa all_apis.json -un unique_apis.json -F WEB_apis -a top_n_blocked.json -i implemented_apis.json
-    # pythongen.py --common webextension/common --final final.json 
-
+import json
+import logging
 
 logger = setLogger("generateFinalLogs")
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-a", "--all", help="Specify the output folder where json files will be stored")
-args = parser.parse_args()
-if args.all:
-    print("Generating all files")
-    generateAll(args.all, logger=logger)
+# mergeData.py -g aggregated_both_modes_only.sqlite
+# main_graphs(filepath="aggregated_both_modes_only.sqlite", logger=logger)
 
+# # pythongen.py --all_apis web-api-manager/sources/standards
+# apis = all_apis("web-api-manager/sources/standards")
+# with open(f"all_apis.json", "w") as f:
+#             json.dump(apis, f, indent=4)
 
-# delete all *.py files from .
-# for file in os.listdir("."):
-#     if file.endswith(".py") and file != "generateFinal.py":
-#         os.remove(file)
+# # pythongen.py --implemented_apis webextension/common/
+# implemented_apis("webextension/common/")
+
+# # getWebAPIs.py -aa all_apis.json -un unique_apis.json -F WEB_apis -a top_n_blocked.json -i implemented_apis.json
+# combineSources("all_apis.json", "unique_apis.json", "WEB_apis", "top_n_blocked.json", "implemented_apis.json")
+
+# pythongen.py --common webextension/common --final final.json
+generate_common("webextension/common", "final.json", None)

@@ -39,7 +39,7 @@ def getDetailsFromFile(file):
         # print(con
     return content
 
-def implemented_apis(path, output):
+def implemented_apis(path):
     if not os.path.exists(path):
         print("The specified path does not exist.")
         exit(1)
@@ -50,7 +50,7 @@ def implemented_apis(path, output):
             filedetails = getDetailsFromFile(f"{path}/{file}")
             apis.append(filedetails)
     # save all apis to a json file
-    with open(f"{output}/implemented_apis.json", "w") as f:
+    with open(f"implemented_apis.json", "w") as f:
         json.dump(apis, f, indent=4)
     return apis
 
@@ -75,7 +75,7 @@ def all_apis(path):
                 apis[nameconvension] = {"catId": content['info']['catId'], "features": content["features"]}
 
     print(domains)
-    with open("../sources.json", "w") as f:
+    with open("sources.json", "w") as f:
         json.dump(sources, f, indent=4)
     return apis
 
@@ -99,7 +99,7 @@ def gen_wrappings(wrappers_dir, final_json, implement_top_n):
     with open(final_json, "r") as f:
         final = json.load(f)
 
-def generate_common(common_dir: str, final_json: str, treshold: int):
+def generate_common(common_dir: str, final_json: str, treshold: int = -100):
     if not os.path.exists(common_dir):
         print("The specified path does not exist.")
         exit(1)
@@ -115,7 +115,10 @@ def generate_common(common_dir: str, final_json: str, treshold: int):
         for feature in finalJson[api]["Features"]:
             if feature['danger'] == None:
                 feature['danger'] = 0
-            if not feature['wrapped'] and feature['danger'] >= treshold:
+            if treshold == None:
+                if not feature['wrapped']:
+                    unimplemented_apis.append(feature['name'])
+            elif not feature['wrapped'] and feature['danger'] >= treshold:
                 unimplemented_apis.append(feature['name'])
         # check if wrappingS-<api>.js exists
         if len(unimplemented_apis) == 0:
@@ -146,17 +149,20 @@ def generate_common(common_dir: str, final_json: str, treshold: int):
         for feature in finalJson[api]["Features"]:
             if feature['danger'] == None:
                 feature['danger'] = 0
-            if not feature['wrapped'] and feature['danger'] >= treshold:
-                if not api in wrappers_to_insert:
-                    wrappers_to_insert[api] = [feature['name']]
-                else:
-                    wrappers_to_insert[api].append(feature['name'])
+            try:
+                if not feature['wrapped']:# and feature['danger'] >= treshold:
+                    if not api in wrappers_to_insert:
+                        wrappers_to_insert[api] = [feature['name']]
+                    else:
+                        wrappers_to_insert[api].append(feature['name'])
 
-                description2_[feature['name']] = {
-                    "description": feature['description'],
-                    "url": feature['url'],
-                    # round danger to 2 decimal places
-                    "danger": f"{round(feature['danger'] * 100, 2)} %"}
+                    description2_[feature['name']] = {
+                        "description": feature['description'],
+                        "url": feature['url'],
+                        # round danger to 2 decimal places
+                        "danger": f"{round(feature['danger'] * 100, 2)} %"}
+            except TypeError:
+                print(f"TypeError: {feature}, {treshold}")
         wrapper_name = f"{finalJson[api]['API_class']}{finalJson[api]['catId']}"
         if not wrappers_to_insert == {}:
             settings[wrapper_name] = fillSettings(finalJson[api], 0.5)
@@ -178,12 +184,16 @@ def generate_common(common_dir: str, final_json: str, treshold: int):
     if "// GENERATED" in content:
         content = content.replace(content[content.find("// GENERATED"):content.rfind("// GENERATED") + len("// GENERATED")], "// ANCHOR")
     content = content.replace("// ANCHOR", f"// GENERATED\n{to_insert}// GENERATED")
+    
+    experimental_variable = generateLevel(settings=settings, level_name="Experimental")
+    # find and replace text between // EXPERIMENTAL tags with experimental_variable
+    if "// EX" in content:
+        content = content.replace(content[content.find("// EX"):content.rfind("// EX") + len("// EX")], "// EXPERIMENTAL")
+    content = content.replace("// EXPERIMENTAL", f"// EX\n{experimental_variable}// EX")
+    
     with open(f"{common_dir}/levels.js", "w", encoding="utf-8") as f:
         f.write(content)
-    # create dictionary from names and danger (asi average of all) and if >= than treshold assing 1, otherwise 0
-    level = generateLevel(settings=settings, level_name="Experimental")
-    with open(f"{common_dir}/ExperimentalVar.js", "w") as f:
-        f.write(level)
+
 
 
 
@@ -205,14 +215,14 @@ def main():
         if not os.path.exists(args.output):
             os.mkdir(args.output)
     if args.implemented_apis:
-        apis = implemented_apis(args.implemented_apis, args.output)
+        apis = implemented_apis(args.implemented_apis)
         for api in apis:
             print(api)
     
     elif args.all_apis:
         apis = all_apis(args.all_apis)
         # save all apis to a json file
-        with open(f"{args.output}/all_apis.json", "w") as f:
+        with open(f"all_apis.json", "w") as f:
             json.dump(apis, f, indent=4)
     
     elif args.gen_wrappings and args.dir and args.final:

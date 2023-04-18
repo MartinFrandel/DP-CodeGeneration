@@ -63,7 +63,7 @@ def getWrappStatus(name, jsonImplemented):
                 return True
     return False
 
-def combineSources(allApis, uniqueApis, mozillaFolder, analysisData, implementedData, output):
+def combineSources(allApis, uniqueApis, mozillaFolder, analysisData, implementedData):
     if not os.path.isdir(mozillaFolder):
         print(f"Wrong mozilla api folder {mozillaFolder}, generate one with 'python3 mergeData.py -ga WEB_apis'")
         return
@@ -143,7 +143,7 @@ def combineSources(allApis, uniqueApis, mozillaFolder, analysisData, implemented
                 "wrapped": isWrapped,
             })
     # save to json
-    with open(f"{output}/final.json", "w") as f:
+    with open(f"final.json", "w") as f:
         json.dump(final, f, indent=4)
 
 
